@@ -1,0 +1,14 @@
+
+/*<div class="bounding-box-set">*/
+/*<div class="bounding-box 017475544-027940693-059408367-066293234"*/
+    /*style="top: 17.4755%; right: 33.7068%; bottom: 72.0593%; left: 59.4084%;">*/
+/*</div></div>*/
+
+.bounding-box {
+    position: absolute;
+    box-shadow: inset 0 0 0 3px #149df2;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    cursor: pointer;
+}
