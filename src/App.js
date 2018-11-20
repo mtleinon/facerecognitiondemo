@@ -5,7 +5,6 @@ import { Logo } from "./components/Logo/Logo";
 import { ImageLinkForm} from "./components/ImageLinkForm/ImageLinkForm";
 import {Rank} from "./components/Rank/Rank";
 import Particles from 'react-particles-js';
-import Clarifai from 'clarifai';
 import {FaceRecognition} from "./components/FaceRecognition/FaceRecognition";
 import {SignIn} from "./components/SignIn/SignIn";
 import {Register} from "./components/Register/Register";
@@ -21,6 +20,22 @@ const particlesOptions = {
         }
     }
 }
+
+const initialState = {
+    input: '',
+    imageUrl: '',
+    box: {},
+    route: 'signin',
+    isSignedIn: false,
+    user: {
+        id: '',
+        name: '',
+        email: '',
+        entries: 0,
+        joined: ''
+    }
+};
+
 class App extends Component {
 
   constructor() {
@@ -30,8 +45,34 @@ class App extends Component {
           imageUrl: '',
           box: {},
           route: 'signin',
-          isSignedIn: false
+          isSignedIn: false,
+          user: {
+              id: '',
+              name: '',
+              email: '',
+              entries: 0,
+              joined: ''
+          }
       }
+  }
+
+  loadUser = (userData) => {
+      this.setState({user: {
+         id: userData.id,
+         name: userData.name,
+         email: userData.email,
+         entries: userData.entries,
+         joined: userData.joined
+      }});
+  };
+
+  componentDidMount() {
+      fetch('https://shrouded-plateau-99023.herokuapp.com/')
+          .then(response => {
+              console.log('componentDidMount: fetch');
+              console.log('componentDidMount', response);
+          });
+      console.log('componentDidMount');
   }
   onInputChange = (event) => {
       console.log(event.target.value);
@@ -56,30 +97,43 @@ class App extends Component {
       this.setState({box: box});
   }
   onSubmitButton = (event) => {
-    // instantiate a new Clarifai app passing in your api key.
     this.setState({imageUrl: this.state.input});
-    console.log(this.state.input);
-    console.log(this.state.imageUrl);
-    const app = new Clarifai.App({
-        apiKey: 'fff7ffe539854edba72adf558d091497'
-    });
-
-    // predict the contents of an image by passing in a url
-    app.models.predict(
-        Clarifai.FACE_DETECT_MODEL,
-        this.state.input)
-        .then(response =>
-            this.displayFaceBox(this.calculateFaceLocation(response)))
-        .catch(err => console.log(err));
+    fetch('https://shrouded-plateau-99023.herokuapp.com/imageurl', {
+        method: 'post',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(
+            {input: this.state.input}
+            )
+    })
+    .then(response => response.json())
+    .then(response => {
+        if (response) {
+            fetch('https://shrouded-plateau-99023.herokuapp.com/image', {
+                method: 'put',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    id: this.state.user.id
+                })
+            })
+            .then(response => response.json())
+            .then(count => {
+                this.setState(Object.assign(
+                    this.state.user, { entries: count}))
+            })
+            .catch(console.log);
+        }
+        this.displayFaceBox(this.calculateFaceLocation(response));
+    })
+    .catch(err => console.log(err));
   };
 
   onRouteChange = (route) => {
       if (route === 'signin') {
-          this.setState({isSignedIn: false});
+          this.setState(initialState);
       } else if (route === 'home') {
           this.setState({isSignedIn: true})
       }
-    this.setState({route: route});
+      this.setState({route: route});
   };
 
   render() {
@@ -90,15 +144,19 @@ class App extends Component {
           {this.state.route === 'home'
             ?   <div>
                     <Logo></Logo>
-                    <Rank/>
+                    <Rank name={this.state.user.name}
+                            entries={this.state.user.entries}/>
                     <ImageLinkForm
                         onInputChange={this.onInputChange}
                         onSubmitButton={this.onSubmitButton}></ImageLinkForm>
                     <FaceRecognition box={this.state.box} imageUrl={this.state.imageUrl}></FaceRecognition>
                 </div>
             : (this.state.route === 'signin'
-                ? <SignIn onRouteChange={this.onRouteChange}/>
-                : <Register onRouteChange={this.onRouteChange}/>
+                ? <SignIn loadUser={this.loadUser}
+                          onRouteChange={this.onRouteChange}/>
+                : <Register
+                          loadUser={this.loadUser}
+                          onRouteChange={this.onRouteChange}/>
               )
           }
       </div>
