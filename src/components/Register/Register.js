@@ -1,5 +1,8 @@
 import React from 'react';
 //({onRouteChange})
+const DATABASE_ADDRESS = 'http://127.0.0.1:3000/';
+// const DATABASE_ADDRESS = 'https://shrouded-plateau-99023.herokuapp.com/';
+
 export class Register extends React.Component {
     constructor(props) {
         super(props);
@@ -21,7 +24,7 @@ export class Register extends React.Component {
     };
     onSubmitRegister = () => {
         console.log('onSubmitRegister');
-        fetch('https://shrouded-plateau-99023.herokuapp.com/register',
+        fetch(DATABASE_ADDRESS + 'register',
             {
                 method: 'post',
                 headers: {'Content-Type': 'application/json'},

@@ -1,5 +1,8 @@
 import React from 'react';
 
+const DATABASE_ADDRESS = 'http://127.0.0.1:3000/';
+// const DATABASE_ADDRESS = 'https://shrouded-plateau-99023.herokuapp.com/';
+
 export class SignIn extends React.Component {
 
     constructor(props) {
@@ -17,7 +20,7 @@ export class SignIn extends React.Component {
         this.setState({signInPassword: event.target.value});
     };
     onSubmitSignIn = () => {
-        fetch('https://shrouded-plateau-99023.herokuapp.com/signin',
+        fetch(DATABASE_ADDRESS + 'signin',
             {
                 method: 'post',
                 headers: {'Content-Type': 'application/json'},

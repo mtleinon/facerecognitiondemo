@@ -9,6 +9,9 @@ import {FaceRecognition} from "./components/FaceRecognition/FaceRecognition";
 import {SignIn} from "./components/SignIn/SignIn";
 import {Register} from "./components/Register/Register";
 
+const DATABASE_ADDRESS = 'http://127.0.0.1:3000/';
+// const DATABASE_ADDRESS = 'https://shrouded-plateau-99023.herokuapp.com/';
+
 const particlesOptions = {
     particles: {
         number: {
@@ -24,7 +27,7 @@ const particlesOptions = {
 const initialState = {
     input: '',
     imageUrl: '',
-    box: {},
+    boxes: [{}],
     route: 'signin',
     isSignedIn: false,
     user: {
@@ -43,7 +46,7 @@ class App extends Component {
       this.state = {
           input: '',
           imageUrl: '',
-          box: {},
+          boxes: [{}],
           route: 'signin',
           isSignedIn: false,
           user: {
@@ -67,7 +70,7 @@ class App extends Component {
   };
 
   componentDidMount() {
-      fetch('https://shrouded-plateau-99023.herokuapp.com/')
+      fetch(DATABASE_ADDRESS)
           .then(response => {
               console.log('componentDidMount: fetch');
               console.log('componentDidMount', response);
@@ -80,25 +83,30 @@ class App extends Component {
       console.log(this.state.input);
   };
 
-  calculateFaceLocation(response) {
-    const clarifaiFace= response.outputs[0].data.regions[0].region_info.bounding_box;
-    const image = document.getElementById('inputImage');
-    const width = Number(image.width);
-    const height = Number(image.height);
-    return {
-        leftCol: clarifaiFace.left_col * width,
-        topRow: clarifaiFace.top_row * height,
-        rightCol: width - (clarifaiFace.right_col * width),
-        bottomRow: height - (clarifaiFace.bottom_row * height)
-    }
+  calculateAllFaceLocations(response) {
+      let faceLocations = [];
+      const image = document.getElementById('inputImage');
+      const width = Number(image.width);
+      const height = Number(image.height);
+      response.outputs[0].data.regions.forEach((region) => {
+          const clarifaiFace= region.region_info.bounding_box;
+          faceLocations.push({
+              leftCol: clarifaiFace.left_col * width,
+              topRow: clarifaiFace.top_row * height,
+              rightCol: width - (clarifaiFace.right_col * width),
+              bottomRow: height - (clarifaiFace.bottom_row * height)
+          });
+      });
+      return faceLocations;
   }
-  displayFaceBox = (box) => {
-      console.log(box);
-      this.setState({box: box});
-  }
+
+  displayFaceBoxes = (boxes) => {
+      this.setState({boxes: boxes});
+  };
+
   onSubmitButton = (event) => {
-    this.setState({imageUrl: this.state.input});
-    fetch('https://shrouded-plateau-99023.herokuapp.com/imageurl', {
+    this.setState({imageUrl: this.state.input, boxes: [{}]});
+    fetch(DATABASE_ADDRESS + 'imageurl', {
         method: 'post',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(
@@ -108,7 +116,7 @@ class App extends Component {
     .then(response => response.json())
     .then(response => {
         if (response) {
-            fetch('https://shrouded-plateau-99023.herokuapp.com/image', {
+            fetch(DATABASE_ADDRESS + 'image', {
                 method: 'put',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -122,7 +130,7 @@ class App extends Component {
             })
             .catch(console.log);
         }
-        this.displayFaceBox(this.calculateFaceLocation(response));
+        this.displayFaceBoxes(this.calculateAllFaceLocations(response));
     })
     .catch(err => console.log(err));
   };
@@ -149,7 +157,7 @@ class App extends Component {
                     <ImageLinkForm
                         onInputChange={this.onInputChange}
                         onSubmitButton={this.onSubmitButton}></ImageLinkForm>
-                    <FaceRecognition box={this.state.box} imageUrl={this.state.imageUrl}></FaceRecognition>
+                    <FaceRecognition boxes={this.state.boxes} imageUrl={this.state.imageUrl}></FaceRecognition>
                 </div>
             : (this.state.route === 'signin'
                 ? <SignIn loadUser={this.loadUser}
