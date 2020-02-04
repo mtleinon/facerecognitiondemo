@@ -1,3 +1,5 @@
 # Face recognition demo
 
-Please try the with the following link: https://facerecognitiondemo.herokuapp.com/
+Front end for face recognition application made in "The Complete Web Developer in 2018" Udemy course.
+
+Please try app the with the following link: https://facerecognitiondemo.herokuapp.com/
